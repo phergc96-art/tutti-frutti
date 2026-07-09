@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutti Frutti Realtime</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🍓 Tutti Frutti 🍋</h1>
+
+        <div id="login-screen" class="card">
+            <h3>Introduce tu nombre para jugar:</h3>
+            <input type="text" id="username-input" placeholder="Tu Apodo...">
+            <button id="join-btn">Entrar a la Sala</button>
+        </div>
+
+        <div id="lobby-screen" class="card hidden">
+            <div class="lobby-layout">
+                <div class="players-list-container">
+                    <h3>Jugadores en la sala:</h3>
+                    <ul id="players-list"></ul>
+                </div>
+                <div class="controls">
+                    <button id="start-btn" class="btn-success">¡Empezar Juego!</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-screen" class="card hidden">
+            <div class="game-header">
+                <h2>Letra de la ronda: <span id="current-letter">-</span></h2>
+            </div>
+            
+            <form id="game-form">
+                <div id="inputs-container"></div>
+                <button type="button" id="stop-btn" class="btn-danger">¡TUTTI FRUTTI! 🛑</button>
+            </form>
+        </div>
+
+        <div id="results-screen" class="card hidden">
+            <h2>Resultados de la Ronda</h2>
+            <p id="winner-announcement"></p>
+            <div id="results-table-container"></div>
+            <button id="next-round-btn">Nueva Ronda / Reiniciar</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
