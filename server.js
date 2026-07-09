@@ -7,12 +7,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Servir archivos estáticos de la carpeta public
-app.use(express.static(path.join(__dirname, 'public')));
+// Servir archivos estáticos directamente desde la raíz (como está en tu GitHub)
+app.use(express.static(path.join(__dirname)));
 
-// Ruta principal explícita para evitar el error "Not Found" en Render
+// Ruta principal explícita apuntando al index.html en la raíz
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Estado global del juego
