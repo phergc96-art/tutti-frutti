@@ -7,13 +7,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Estructura oficial solicitada
 const CATEGORIAS_OFICIALES = ["Nombre", "Apellido", "País", "Color", "Animal", "Cosa", "Fruta", "Profesión"];
 const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -23,7 +22,7 @@ let gameState = {
     isGameActive: false,
     categories: CATEGORIAS_OFICIALES,
     currentRound: 0,
-    maxRounds: 5, // Valor por defecto
+    maxRounds: 5,
     submissionsReceived: 0
 };
 
@@ -31,13 +30,13 @@ io.on('connection', (socket) => {
     console.log(`Usuario conectado: ${socket.id}`);
 
     socket.on('joinGame', (username) => {
-        // Conservar puntaje acumulado si el jugador ya existía o inicia en 0
         gameState.players[socket.id] = {
             id: socket.id,
             username: username,
             answers: {},
             score: 0,
-            roundScore: 0
+            roundScore: 0,
+            detailedScores: {} // Almacena el desglose de puntos por categoría
         };
         socket.emit('initValues', { categories: gameState.categories, maxRounds: gameState.maxRounds });
         io.emit('updatePlayers', Object.values(gameState.players));
@@ -51,10 +50,10 @@ io.on('connection', (socket) => {
             gameState.submissionsReceived = 0;
             gameState.currentLetter = LETRAS[Math.floor(Math.random() * LETRAS.length)];
             
-            // Limpiar respuestas de la ronda anterior
             for (let id in gameState.players) {
                 gameState.players[id].answers = {};
                 gameState.players[id].roundScore = 0;
+                gameState.players[id].detailedScores = {};
             }
 
             io.emit('gameStarted', {
@@ -84,7 +83,6 @@ io.on('connection', (socket) => {
         gameState.submissionsReceived++;
         const totalPlayers = Object.keys(gameState.players).length;
 
-        // Cuando todos hayan enviado sus respuestas tras el STOP, procesamos puntajes
         if (gameState.submissionsReceived >= totalPlayers) {
             calcularPuntajes();
             io.emit('showResults', {
@@ -96,7 +94,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('resetGame', () => {
-        // Reinicio total del campeonato
         gameState.isGameActive = false;
         gameState.currentLetter = '';
         gameState.currentRound = 0;
@@ -104,6 +101,7 @@ io.on('connection', (socket) => {
             gameState.players[id].score = 0;
             gameState.players[id].roundScore = 0;
             gameState.players[id].answers = {};
+            gameState.players[id].detailedScores = {};
         }
         io.emit('gameReset', { categories: gameState.categories });
     });
@@ -119,15 +117,15 @@ io.on('connection', (socket) => {
     });
 });
 
-// Función con tu lógica exacta de puntajes (0, 50, 100)
 function calcularPuntajes() {
     const ids = Object.keys(gameState.players);
+    const letraActual = gameState.currentLetter.toLowerCase();
     
-    // Inicializar puntajes de esta ronda en 0
+    // Inicializar estructuras de la ronda
     ids.forEach(id => {
         gameState.players[id].roundScore = 0;
-        // Sanitizar respuestas (pasar a minúsculas y quitar espacios sobrantes)
         gameState.categories.forEach(cat => {
+            gameState.players[id].detailedScores[cat] = 0;
             if (!gameState.players[id].answers[cat]) {
                 gameState.players[id].answers[cat] = "";
             }
@@ -138,19 +136,22 @@ function calcularPuntajes() {
         ids.forEach(idActual => {
             let palabraActual = gameState.players[idActual].answers[cat].trim().toLowerCase();
 
-            // Condición 1: Campo Vacío -> 0 puntos
-            if (!palabraActual) {
+            // VALIDACIONES ESTRICTAS DE PALABRA REAL / COHERENTE:
+            // 1. Campo vacío -> 0 puntos
+            // 2. Que tenga menos de 3 letras -> 0 puntos (Evita "A", "An", etc.)
+            // 3. Que NO empiece con la letra de la ronda -> 0 puntos
+            if (!palabraActual || palabraActual.length < 3 || !palabraActual.startsWith(letraActual)) {
+                gameState.players[idActual].detailedScores[cat] = 0;
                 return; 
             }
 
             let esRepetida = false;
-            let esUnica = true;
 
             ids.forEach(idOtro => {
                 if (idActual !== idOtro) {
                     let palabraOtra = gameState.players[idOtro].answers[cat].trim().toLowerCase();
-                    if (palabraOtra) {
-                        esUnica = false; // Hay otros jugadores que respondieron algo
+                    // Solo comparamos contra otras palabras válidas (de longitud >= 3 y que empiecen con la letra)
+                    if (palabraOtra && palabraOtra.length >= 3 && palabraOtra.startsWith(letraActual)) {
                         if (palabraActual === palabraOtra) {
                             esRepetida = true;
                         }
@@ -158,18 +159,18 @@ function calcularPuntajes() {
                 }
             });
 
-            // Condición 2: Palabra igual a otro jugador -> +50 puntos
+            // Asignación de puntos según tus reglas de negocio exactas
             if (esRepetida) {
+                gameState.players[idActual].detailedScores[cat] = 50;
                 gameState.players[idActual].roundScore += 50;
-            } 
-            // Condición 3: Diferente de los demás (o es el único que respondió) -> +100 puntos
-            else {
+            } else {
+                gameState.players[idActual].detailedScores[cat] = 100;
                 gameState.players[idActual].roundScore += 100;
             }
         });
     });
 
-    // Sumar el acumulado global de cada jugador
+    // Acumular puntaje al global
     ids.forEach(id => {
         gameState.players[id].score += gameState.players[id].roundScore;
     });
