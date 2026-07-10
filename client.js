@@ -24,7 +24,6 @@ const resultsTitle = document.getElementById('results-title');
 let myUsername = "";
 let gameCategories = [];
 
-// REQUISITO: Recordar nombre del jugador automáticamente
 document.addEventListener("DOMContentLoaded", () => {
     const savedName = localStorage.getItem("tutti_frutti_username");
     if (savedName) {
@@ -35,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
 joinBtn.addEventListener('click', () => {
     myUsername = usernameInput.value.trim();
     if (myUsername) {
-        localStorage.setItem("tutti_frutti_username", myUsername); // Guardado permanente
+        localStorage.setItem("tutti_frutti_username", myUsername);
         socket.emit('joinGame', myUsername);
         loginScreen.classList.add('hidden');
         lobbyScreen.classList.remove('hidden');
@@ -77,6 +76,9 @@ socket.on('gameStarted', (data) => {
     currentLetter.textContent = data.letter;
     buildForm(data.categories);
     
+    // SOLUCIÓN AL PROBLEMA DEL STOP: Reactivar el botón al iniciar la nueva ronda
+    stopBtn.disabled = false;
+    
     loginScreen.classList.add('hidden');
     lobbyScreen.classList.add('hidden');
     resultsScreen.classList.add('hidden');
@@ -84,7 +86,6 @@ socket.on('gameStarted', (data) => {
 });
 
 socket.on('stopGame', (data) => {
-    // Bloquear inmediatamente la pantalla del rival al presionar STOP
     const inputs = inputsContainer.querySelectorAll('input');
     inputs.forEach(input => input.disabled = true);
     stopBtn.disabled = true;
@@ -101,7 +102,6 @@ socket.on('showResults', (data) => {
     
     resultsTitle.textContent = `Resultados Ronda ${data.currentRound} de ${data.maxRounds}`;
     
-    // Validar si es la ronda final para cambiar el flujo del botón
     if (data.currentRound >= data.maxRounds) {
         nextRoundBtn.classList.add('hidden');
         winnerAnnouncement.textContent = "🏆 ¡PARTIDA FINALIZADA! Revisa el podio abajo.";
@@ -109,7 +109,6 @@ socket.on('showResults', (data) => {
         nextRoundBtn.classList.remove('hidden');
     }
 
-    // Dibujar la tabla interactiva de respuestas
     resultsTableContainer.innerHTML = '';
     gameCategories.forEach(cat => {
         const catBlock = document.createElement('div');
@@ -118,17 +117,17 @@ socket.on('showResults', (data) => {
         
         data.players.forEach(p => {
             const ans = p.answers[cat] || '---';
+            const pts = p.detailedScores ? p.detailedScores[cat] : 0;
             const row = document.createElement('div');
             row.className = 'player-res';
-            row.innerHTML = `<span><strong>${p.username}:</strong> ${ans}</span>`;
+            // Mostrar la palabra junto con los puntos individuales obtenidos en ese campo
+            row.innerHTML = `<span><strong>${p.username}:</strong> ${ans} <small style="color: green; font-weight:bold;">(+${pts} pts)</small></span>`;
             catBlock.appendChild(row);
         });
         resultsTableContainer.appendChild(catBlock);
     });
 
-    // Dibujar la tabla de clasificación acumulada y puntos ganados en la ronda
     leaderboardList.innerHTML = '';
-    // Ordenar jugadores por puntaje acumulado de mayor a menor
     const sortedPlayers = data.players.sort((a, b) => b.score - a.score);
     sortedPlayers.forEach((p, index) => {
         const li = document.createElement('li');
