@@ -8,11 +8,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>🍓 Tutti Frutti 🍋</h1>
+        <h1>🍓 Tutti Frutti - Pequeñ@s 🍋</h1>
 
         <div id="login-screen" class="card">
             <h3>Introduce tu nombre para jugar:</h3>
-            <input type="text" id="username-input" placeholder="Escribe tu nombre...">
+            <input type="text" id="username-input" placeholder="Tu Apodo...">
             <button id="join-btn">Entrar a la Sala</button>
         </div>
 
@@ -23,27 +23,45 @@
                     <ul id="players-list"></ul>
                 </div>
                 <div class="controls">
-                    <button id="start-btn" class="btn-success">¡Empezar Juego!</button>
+                    <label for="rounds-select"><strong>Cantidad de Rondas:</strong></label>
+                    <select id="rounds-select" style="width:100%; padding:10px; margin: 10px 0; border-radius:6px;">
+                        <option value="3">3 Rondas</option>
+                        <option value="5" selected>5 Rondas</option>
+                        <option value="10">10 Rondas</option>
+                    </select>
+                    <button id="start-btn" class="btn-success">¡Empezar Partida!</button>
                 </div>
             </div>
         </div>
 
         <div id="game-screen" class="card hidden">
             <div class="game-header">
+                <div style="display:flex; justify-content: space-between; font-weight: bold; color: #666;">
+                    <span id="round-indicator">Ronda: 1/5</span>
+                </div>
                 <h2>Letra de la ronda: <span id="current-letter">-</span></h2>
             </div>
             
             <form id="game-form">
                 <div id="inputs-container"></div>
-                <button type="button" id="stop-btn" class="btn-danger">¡STOP! 🛑</button>
+                <button type="button" id="stop-btn" class="btn-danger">🛑 ¡STOP! 🛑</button>
             </form>
         </div>
 
         <div id="results-screen" class="card hidden">
-            <h2>Resultados de la Ronda</h2>
-            <p id="winner-announcement"></p>
+            <h2 id="results-title">Resultados de la Ronda</h2>
+            <p id="winner-announcement" style="font-weight: bold; color: var(--danger); text-align:center; margin-bottom: 15px;"></p>
+            
+            <h3>Tablero de Respuestas:</h3>
             <div id="results-table-container"></div>
-            <button id="next-round-btn">Nueva Ronda / Reiniciar</button>
+            
+            <hr style="margin:20px 0; border:0; border-top:1px solid #ddd;">
+            
+            <h3>Puntajes Acumulados:</h3>
+            <ul id="leaderboard-list" style="margin-bottom: 20px;"></ul>
+
+            <button id="next-round-btn">Siguiente Ronda ➡️</button>
+            <button id="reset-btn" style="background-color:#7f8c8d;">Reiniciar Todo el Juego</button>
         </div>
     </div>
 
