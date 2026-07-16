@@ -58,32 +58,26 @@
                 </div>
             </div>
 
-            <!-- Formulario de Entrada Activo -->
-            <div class="card active-inputs-card">
-                <h3>Escribe rápido aquí:</h3>
-                <form id="game-form">
-                    <div id="inputs-container" class="grid-inputs"></div>
-                </form>
-            </div>
-
-            <!-- Plantilla de Excel Virtual (Hoja del Cuaderno) -->
-            <div class="sheet-container">
-                <h3>Tu Hoja de Resultados (Tutti Frutti)</h3>
-                <div class="table-responsive">
-                    <table class="excel-table">
-                        <thead>
-                            <tr id="table-headers">
-                                <th>Letra</th>
-                                <!-- Categorías cargadas dinámicamente -->
-                                <th>Puntaje</th>
-                            </tr>
-                        </thead>
-                        <tbody id="excel-body">
-                            <!-- Filas generadas dinámicamente (Fila 1 a Fila 15) -->
-                        </tbody>
-                    </table>
+            <!-- Plantilla de Excel Virtual (La Hoja es el Formulario de escritura) -->
+            <form id="game-form" onsubmit="event.preventDefault();">
+                <div class="sheet-container">
+                    <h3>Tu Hoja de Resultados (Tutti Frutti)</h3>
+                    <div class="table-responsive">
+                        <table class="excel-table">
+                            <thead>
+                                <tr id="table-headers">
+                                    <th>Letra</th>
+                                    <!-- Categorías cargadas dinámicamente -->
+                                    <th>Puntaje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="excel-body">
+                                <!-- Filas con inputs generadas dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
 
         <!-- Modal / Pantalla de Resultados de la Ronda -->
