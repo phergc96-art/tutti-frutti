@@ -3,65 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutti Frutti Realtime</title>
+    <title>Tutti Frutti - Plantilla Clásica de Papel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🍓 Tutti Frutti - Pequeñ@s 🍋</h1>
-
+        <!-- Pantalla de Ingreso -->
         <div id="login-screen" class="card">
-            <h3>Introduce tu nombre para jugar:</h3>
-            <input type="text" id="username-input" placeholder="Tu Apodo...">
-            <button id="join-btn">Entrar a la Sala</button>
+            <h1 class="logo">🍓 Tutti Frutti 🍋</h1>
+            <p class="subtitle">Registra tu usuario para comenzar a llenar tu hoja de juego</p>
+            <div class="form-group">
+                <input type="text" id="username-input" placeholder="Nombre o apodo..." maxlength="15">
+                <button id="join-btn" class="btn-primary">Entrar a la Sala</button>
+            </div>
         </div>
 
+        <!-- Sala de Espera / Lobby -->
         <div id="lobby-screen" class="card hidden">
+            <h2>Sala de Espera</h2>
             <div class="lobby-layout">
-                <div class="players-list-container">
-                    <h3>Jugadores en la sala:</h3>
+                <div class="players-box">
+                    <h3>Jugadores Conectados:</h3>
                     <ul id="players-list"></ul>
                 </div>
-                <div class="controls">
-                    <label for="rounds-select"><strong>Cantidad de Rondas:</strong></label>
-                    <select id="rounds-select" style="width:100%; padding:10px; margin: 10px 0; border-radius:6px;">
-                        <option value="3">3 Rondas</option>
-                        <option value="5" selected>5 Rondas</option>
-                        <option value="10">10 Rondas</option>
+                <div class="config-box">
+                    <h3>Ajustar Partida</h3>
+                    <label for="rounds-select">¿Cuántas filas (partidas) jugarán?</label>
+                    <select id="rounds-select">
+                        <option value="5">5 Partidas</option>
+                        <option value="10">10 Partidas</option>
+                        <option value="15">15 Partidas</option>
                     </select>
-                    <button id="start-btn" class="btn-success">¡Empezar Partida!</button>
+                    <button id="start-btn" class="btn-success">Comenzar Todo</button>
                 </div>
             </div>
         </div>
 
-        <div id="game-screen" class="card hidden">
-            <div class="game-header">
-                <div style="display:flex; justify-content: space-between; font-weight: bold; color: #666;">
-                    <span id="round-indicator">Ronda: 1/5</span>
-                </div>
-                <h2>Letra de la ronda: <span id="current-letter">-</span></h2>
-            </div>
-            
-            <form id="game-form">
-                <div id="inputs-container"></div>
-                <button type="button" id="stop-btn" class="btn-danger">🛑 ¡STOP! 🛑</button>
-            </form>
+        <!-- Pantalla de Preparación (Cuenta Regresiva) -->
+        <div id="countdown-screen" class="card hidden text-center">
+            <h2 class="countdown-title">Siguiente Letra: <span id="next-letter-display">-</span></h2>
+            <p>Prepárate para rellenar la fila...</p>
+            <div id="countdown-timer">3</div>
         </div>
 
+        <!-- Tablero de Juego Principal (La Plantilla tipo Excel) -->
+        <div id="game-screen" class="hidden">
+            <div class="game-top-panel">
+                <div class="panel-left">
+                    <span id="round-indicator">Fila activa: 1 / 5</span>
+                    <h2>Letra Actual: <span id="current-letter">-</span></h2>
+                </div>
+                <div class="panel-right">
+                    <button type="button" id="stop-btn" class="btn-danger animate-pulse">🚨 ¡STOP! 🚨</button>
+                </div>
+            </div>
+
+            <!-- Formulario de Entrada Activo -->
+            <div class="card active-inputs-card">
+                <h3>Escribe rápido aquí:</h3>
+                <form id="game-form">
+                    <div id="inputs-container" class="grid-inputs"></div>
+                </form>
+            </div>
+
+            <!-- Plantilla de Excel Virtual (Hoja del Cuaderno) -->
+            <div class="sheet-container">
+                <h3>Tu Hoja de Resultados (Tutti Frutti)</h3>
+                <div class="table-responsive">
+                    <table class="excel-table">
+                        <thead>
+                            <tr id="table-headers">
+                                <th>Letra</th>
+                                <!-- Categorías cargadas dinámicamente -->
+                                <th>Puntaje</th>
+                            </tr>
+                        </thead>
+                        <tbody id="excel-body">
+                            <!-- Filas generadas dinámicamente (Fila 1 a Fila 15) -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal / Pantalla de Resultados de la Ronda -->
         <div id="results-screen" class="card hidden">
-            <h2 id="results-title">Resultados de la Ronda</h2>
-            <p id="winner-announcement" style="font-weight: bold; color: var(--danger); text-align:center; margin-bottom: 15px;"></p>
-            
-            <h3>Tablero de Respuestas:</h3>
-            <div id="results-table-container"></div>
-            
-            <hr style="margin:20px 0; border:0; border-top:1px solid #ddd;">
-            
-            <h3>Puntajes Acumulados:</h3>
-            <ul id="leaderboard-list" style="margin-bottom: 20px;"></ul>
+            <h2 id="results-title">Revisión de la Partida</h2>
+            <p id="winner-announcement"></p>
 
-            <button id="next-round-btn">Siguiente Ronda ➡️</button>
-            <button id="reset-btn" style="background-color:#7f8c8d;">Reiniciar Todo el Juego</button>
+            <div class="table-responsive">
+                <table class="results-comparison-table">
+                    <thead>
+                        <tr id="results-headers">
+                            <th>Categoría</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-comparison-body"></tbody>
+                </table>
+            </div>
+
+            <div class="results-actions">
+                <button id="next-round-btn" class="btn-primary">Siguiente Partida ➡️</button>
+                <button id="reset-btn" class="btn-secondary">Reiniciar Campeonato</button>
+            </div>
         </div>
     </div>
 
