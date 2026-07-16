@@ -15,7 +15,6 @@ const startBtn = document.getElementById('start-btn');
 const roundsSelect = document.getElementById('rounds-select');
 const currentLetter = document.getElementById('current-letter');
 const roundIndicator = document.getElementById('round-indicator');
-const inputsContainer = document.getElementById('inputs-container');
 const stopBtn = document.getElementById('stop-btn');
 const winnerAnnouncement = document.getElementById('winner-announcement');
 const nextRoundBtn = document.getElementById('next-round-btn');
@@ -60,6 +59,8 @@ stopBtn.addEventListener('click', () => {
 });
 
 nextRoundBtn.addEventListener('click', () => {
+    // IMPORTANTE: habilitar botón de stop y limpiar para el siguiente inicio
+    stopBtn.disabled = false;
     socket.emit('startGame', { maxRounds: totalGameRounds });
 });
 
@@ -82,12 +83,10 @@ socket.on('updatePlayers', (players) => {
     });
 });
 
-// Cuenta regresiva 3, 2, 1 antes de jugar
 socket.on('prepareNextRound', (data) => {
     currentRoundNum = data.currentRound;
     totalGameRounds = data.maxRounds;
     
-    // Configurar pantallas
     loginScreen.classList.add('hidden');
     lobbyScreen.classList.add('hidden');
     resultsScreen.classList.add('hidden');
@@ -108,22 +107,23 @@ socket.on('prepareNextRound', (data) => {
             countdownScreen.classList.add('hidden');
             gameScreen.classList.remove('hidden');
             
-            // Iniciar ronda de verdad
             roundIndicator.textContent = `Fila activa: ${data.currentRound} / ${data.maxRounds}`;
             currentLetter.textContent = data.letter;
-            buildForm(data.categories);
+            
+            // Habilitar los inputs del Excel para esta ronda activa
+            habilitarInputsFilaExcel(data.currentRound, data.letter);
             stopBtn.disabled = false;
         }
     }, 1000);
 });
 
 socket.on('stopGame', (data) => {
-    // Bloquear inmediatamente formulario para evitar escritura
-    const inputs = inputsContainer.querySelectorAll('input');
+    // Bloquear de forma estricta todos los inputs de la tabla Excel
+    const inputs = excelBody.querySelectorAll('input');
     inputs.forEach(input => input.disabled = true);
     stopBtn.disabled = true;
     
-    winnerAnnouncement.textContent = `¡${data.winner} presionó el STOP! 🛑 Evaluando palabras...`;
+    winnerAnnouncement.innerHTML = `🚨 ¡<strong>${data.winner}</strong> presionó el STOP! 🛑 Evaluando respuestas...`;
     
     const answers = getFormData();
     socket.emit('submitAnswers', answers);
@@ -133,7 +133,6 @@ socket.on('showResults', (data) => {
     resultsScreen.classList.remove('hidden');
     resultsTitle.textContent = `Resultados de la Partida (Fila ${data.currentRound})`;
 
-    // Determinar si es la partida final del juego
     if (data.currentRound >= data.maxRounds) {
         nextRoundBtn.classList.add('hidden');
         winnerAnnouncement.innerHTML += `<br><strong style="color:var(--primary); font-size:1.2rem;">🏆 ¡CAMPEONATO CONCLUIDO!</strong>`;
@@ -141,14 +140,12 @@ socket.on('showResults', (data) => {
         nextRoundBtn.classList.remove('hidden');
     }
 
-    // Actualizar la Plantilla Excel Visual con las respuestas de este jugador
     const miJugador = data.players.find(p => p.id === socket.id);
     if (miJugador) {
-        escribirFilaExcel(data.currentRound, data.letter, miJugador.answersByRound[data.currentRound], miJugador.detailedScoresByRound[data.currentRound], miJugador.roundScore);
+        escribirFilaExcelConResultados(data.currentRound, data.letter, miJugador.answersByRound[data.currentRound], miJugador.detailedScoresByRound[data.currentRound], miJugador.roundScore);
         actualizarSumaTotal(miJugador.score);
     }
 
-    // Generar la tabla comparativa en la ventana de resultados
     generarTablaComparacion(data.players, data.currentRound, data.letter);
 });
 
@@ -161,7 +158,7 @@ socket.on('gameReset', (data) => {
     generarEstructuraTablaExcel();
 });
 
-// Inicializa las cabeceras de Excel y genera filas vacías de la 1 a la 15
+// Inicializa las cabeceras de Excel y genera filas vacías de la 1 a la 15 con el número de fila
 function generarEstructuraTablaExcel() {
     tableHeaders.innerHTML = `<th>Letra</th>`;
     gameCategories.forEach(cat => {
@@ -177,9 +174,14 @@ function generarEstructuraTablaExcel() {
     for (let r = 1; r <= 15; r++) {
         const tr = document.createElement('tr');
         tr.id = `excel-row-${r}`;
-        tr.innerHTML = `<td class="row-label">Fila ${r}</td>` + 
-                       Array(gameCategories.length).fill('<td></td>').join('') + 
-                       `<td class="score-cell">-</td>`;
+        
+        // El primer elemento de la fila indica el número de fila inicialmente
+        let rowHtml = `<td class="row-label" id="row-label-${r}">Fila ${r}</td>`;
+        gameCategories.forEach(() => {
+            rowHtml += `<td></td>`;
+        });
+        rowHtml += `<td class="score-cell">-</td>`;
+        tr.innerHTML = rowHtml;
         excelBody.appendChild(tr);
     }
     
@@ -187,11 +189,36 @@ function generarEstructuraTablaExcel() {
     const totalTr = document.createElement('tr');
     totalTr.id = "excel-total-row";
     totalTr.innerHTML = `<td colspan="${gameCategories.length + 1}" style="text-align: right; font-weight: bold; background: #ffeaa7;">SUMA TOTAL:</td>` +
-                        `<td id="excel-sum-total" style="font-weight: bold; background: #ffeaa7; text-align: center;">0</td>`;
+                        `<td id="excel-sum-total" style="font-weight: bold; background: #ffeaa7; text-align: center;">0 Pts</td>`;
     excelBody.appendChild(totalTr);
 }
 
-function escribirFilaExcel(roundNum, letra, answers, scores, roundScore) {
+// Reemplaza la fila estática de la ronda actual por inputs reales de Excel editables
+function habilitarInputsFilaExcel(roundNum, letra) {
+    const row = document.getElementById(`excel-row-${roundNum}`);
+    if (row) {
+        // En la columna Letra se pone la letra que ha salido aleatoriamente
+        let htmlStr = `<td class="letter-cell-active" id="row-label-${roundNum}"><strong>${letra}</strong></td>`;
+        
+        gameCategories.forEach(cat => {
+            htmlStr += `<td class="cell-input-container">
+                <input type="text" id="excel-input-${cat}" class="excel-inline-input" autocomplete="off" placeholder="..." maxlength="25">
+            </td>`;
+        });
+        
+        htmlStr += `<td class="score-cell">Jugando...</td>`;
+        row.innerHTML = htmlStr;
+
+        // Auto-enfocar el primer input de la tabla de forma fluida
+        setTimeout(() => {
+            const primerInput = row.querySelector('input');
+            if (primerInput) primerInput.focus();
+        }, 150);
+    }
+}
+
+// Transforma la fila editable de inputs a texto estático mostrando colores de puntuación
+function escribirFilaExcelConResultados(roundNum, letra, answers, scores, roundScore) {
     const row = document.getElementById(`excel-row-${roundNum}`);
     if (row) {
         let htmlStr = `<td class="letter-cell">${letra}</td>`;
@@ -213,7 +240,6 @@ function actualizarSumaTotal(totalScore) {
     }
 }
 
-// Compara las palabras de todos los jugadores en un modal para mayor transparencia
 function generarTablaComparacion(players, roundNum, letra) {
     resultsHeaders.innerHTML = `<th>Jugador</th>`;
     gameCategories.forEach(cat => {
@@ -243,28 +269,10 @@ function generarTablaComparacion(players, roundNum, letra) {
     });
 }
 
-function buildForm(categories) {
-    inputsContainer.innerHTML = '';
-    categories.forEach(cat => {
-        const div = document.createElement('div');
-        div.className = 'form-group';
-        div.innerHTML = `
-            <label>${cat}</label>
-            <input type="text" id="cat-${cat}" autocomplete="off" placeholder="..." maxlength="25">
-        `;
-        inputsContainer.appendChild(div);
-    });
-    // Poner el foco de forma automática en el primer input
-    setTimeout(() => {
-        const firstInput = inputsContainer.querySelector('input');
-        if (firstInput) firstInput.focus();
-    }, 100);
-}
-
 function getFormData() {
     const answers = {};
     gameCategories.forEach(cat => {
-        const input = document.getElementById(`cat-${cat}`);
+        const input = document.getElementById(`excel-input-${cat}`);
         answers[cat] = input ? input.value.trim() : '';
     });
     return answers;
