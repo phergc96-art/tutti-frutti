@@ -66,6 +66,12 @@ button {
     transition: all 0.2s ease-in-out;
 }
 
+button:disabled {
+    background: #bdc3c7 !important;
+    cursor: not-allowed;
+    animation: none !important;
+}
+
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover { background: #0773c5; }
 .btn-success { background: var(--success); color: #fff; }
@@ -91,14 +97,6 @@ button {
     padding: 15px;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
-}
-
-/* Inputs del juego */
-.grid-inputs {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
 }
 
 .form-group {
@@ -153,13 +151,14 @@ button {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.95rem;
-    min-width: 850px;
+    min-width: 900px;
 }
 
 .excel-table th, .excel-table td {
     border: 1px solid var(--excel-border);
-    padding: 10px;
+    padding: 8px;
     text-align: center;
+    height: 48px; /* Altura de celda uniforme */
 }
 
 .excel-table th {
@@ -172,6 +171,45 @@ button {
     background-color: #f1f2f6;
     font-weight: bold;
     color: #57606f;
+    width: 80px;
+}
+
+.letter-cell-active {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 80px;
+}
+
+.letter-cell {
+    background-color: #f1f2f6;
+    font-weight: bold;
+    font-size: 1.1rem;
+    width: 80px;
+}
+
+/* Celdas del Excel con Inputs de Escritura Directa */
+.cell-input-container {
+    padding: 0 !important; /* Elimina padding interno para abarcar toda la celda */
+    position: relative;
+}
+
+.excel-inline-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 10px;
+    font-size: 1rem;
+    text-align: center;
+    background: #fffdf0; /* Color sutil para denotar edición */
+    outline: none;
+    transition: background 0.15s ease;
+}
+
+.excel-inline-input:focus {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 2px var(--primary);
 }
 
 /* Colores para puntajes dentro de la plantilla */
@@ -200,11 +238,13 @@ button {
     border-radius: 10px;
     background: rgba(0,0,0,0.05);
     margin-left: 5px;
+    text-decoration: none !important;
 }
 
 .score-cell, .score-total-cell {
     font-weight: bold;
     background-color: #f5f6fa;
+    width: 110px;
 }
 
 /* Cuenta regresiva */
