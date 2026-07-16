@@ -1,13 +1,13 @@
 {
   "name": "tutti-frutti-realtime",
   "version": "1.0.0",
-  "description": "Juego de Tutti Frutti en tiempo real",
+  "description": "Juego clásico de Tutti Frutti en tiempo real con diseño de hoja de cuaderno",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.21.0",
-    "socket.io": "^4.8.0"
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
   }
 }
